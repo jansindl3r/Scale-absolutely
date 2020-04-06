@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>developer</key>
+	<string>Jan Sindler</string>
+	<key>developerURL</key>
+	<string>https://www.futurefonts.xyz/jan-sindler</string>
+	<key>html</key>
+	<false/>
+	<key>launchAtStartUp</key>
+	<true/>
+	<key>mainScript</key>
+	<string>scaleAbsolutely.py</string>
+	<key>name</key>
+	<string>Scale, absolutely!</string>
+	<key>requiresVersionMajor</key>
+	<string>3</string>
+	<key>requiresVersionMinor</key>
+	<string>2</string>
+	<key>timeStamp</key>
+	<real>1586166856.758841</real>
+	<key>version</key>
+	<string>0.1</string>
+</dict>
+</plist>
