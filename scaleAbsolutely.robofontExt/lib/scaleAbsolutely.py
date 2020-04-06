@@ -74,29 +74,39 @@ class ScaleAbsolutely:
             "inspectorWindowWillShowDescriptions",
             "inspectorWindowWillShowDescriptions",
         )
-        with open(Path(__file__).parent/'buttonState.txt', 'r') as inputFile:
+        with open(Path(__file__).parent/'.buttonState', 'r') as inputFile:
             self.buttonState = bool(inputFile.read())
+        self.stateDict = {
+            True: "pt",
+            False: "%"
+        }
 
     def setButtonState(self, state: bool) -> None:
         self.buttonState = state
-        with open(Path(__file__).parent/'buttonState.txt', 'w+') as outputFile:
+        with open(Path(__file__).parent/'.buttonState', 'w+') as outputFile:
             outputFile.write(str(state))
+
+    def setSign(self, state: bool) -> None:
+        """
+        Scale tab - change % and pt, depending on its state
+        """
+        sign = self.stateDict[state]
+        self.view.scaleYProcent.set(sign)
+        self.view.scaleXProcent.set(sign)
 
     def scaleAbsolutelyCallback(self, sender) -> None:
         """
         switching state of button globally and notation of input fields
         """
         if sender.get():
-            sign = "pt"
             state = True
         else:
-            sign = "%"
             state = False
 
         self.setButtonState(state)
         self.view.absolutelyBool = state
-        self.view.scaleYProcent.set(sign)
-        self.view.scaleXProcent.set(sign)
+        self.setSign(state)
+
 
     def scaleExistingButtons(self) -> None:
         """
@@ -133,6 +143,7 @@ class ScaleAbsolutely:
             )
             view.scaleAbsolutely = scaleAbsolutely
             self.view = view
+            self.setSign(self.buttonState)
 
 
 ScaleAbsolutely()
