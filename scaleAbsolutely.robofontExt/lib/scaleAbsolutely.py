@@ -1,12 +1,16 @@
 import math
 
 from pathlib import Path
-from mojo.events import addObserver, clearObservers
 from functools import wraps
+from typing import Callable
+
+from mojo.events import addObserver
+from mojo.extensions import getExtensionDefault, setExtensionDefault
 from lib.UI.roundRectButton import RoundRectButton
 from lib.UI.inspector.transformPane import TransformPane
 from vanilla import Button, CheckBox
-from typing import Callable
+
+extensionKey = "jan-sindler.scale.absolutely"
 
 
 def possibleZeroDivison(numr, dnom, result=1.0) -> float:
@@ -26,11 +30,15 @@ def absoluteScaleCallback(self, sender) -> None:
     But it recalculates the scale based on wanted point width, height.
     """
     glyph = CurrentGlyph()
-    pointObjects = (
-        glyph.selection
-        if glyph.selection
-        else (c.segments for c in glyph)
-    )
+    pointObjects = glyph.selection
+    if not pointObjects:
+        container: list = []
+        for contour in glyph:
+            for segment in contour:
+                for point in segment:
+                    if point.type.lower() != "offcurve":
+                        container.append(point)
+        pointObjects = container
     points = tuple(pt.position for pt in pointObjects)
     xMin, _ = min(points, key=lambda x: x[0])
     xMax, _ = max(points, key=lambda x: x[0])
@@ -51,40 +59,33 @@ def absoluteDecorator(func) -> Callable:
     """
     decorater to modify the default scaleCallback
     """
+
     @wraps(func)
     def wrapper(self, *args, **kwargs) -> None:
         def newFunc(self, *args, **kwargs) -> None:
-            if self.absolutelyBool:
+            if getExtensionDefault(extensionKey):
                 absoluteScaleCallback(self, *args, **kwargs)
             else:
                 func(self, *args, **kwargs)
             return None
+
         return newFunc(self, *args, **kwargs)
+
     return wrapper
 
-setattr(TransformPane, "scaleCallback", absoluteDecorator(TransformPane.scaleCallback))
-setattr(TransformPane, "absolutelyBool", False)
 
-clearObservers()
+setattr(TransformPane, "scaleCallback", absoluteDecorator(TransformPane.scaleCallback))
+
 
 class ScaleAbsolutely:
-    def __init__(self) -> None:
+    def __init__(self, extensionKey) -> None:
         addObserver(
             self,
             "inspectorWindowWillShowDescriptions",
             "inspectorWindowWillShowDescriptions",
         )
-        with open(Path(__file__).parent/'.buttonState', 'r') as inputFile:
-            self.buttonState = bool(inputFile.read())
-        self.stateDict = {
-            True: "pt",
-            False: "%"
-        }
-
-    def setButtonState(self, state: bool) -> None:
-        self.buttonState = state
-        with open(Path(__file__).parent/'.buttonState', 'w+') as outputFile:
-            outputFile.write(str(state))
+        self.extensionKey = extensionKey
+        self.stateDict = {True: "pt", False: "%"}
 
     def setSign(self, state: bool) -> None:
         """
@@ -103,16 +104,23 @@ class ScaleAbsolutely:
         else:
             state = False
 
-        self.setButtonState(state)
-        self.view.absolutelyBool = state
+        setExtensionDefault(self.extensionKey, state)
         self.setSign(state)
-
 
     def scaleExistingButtons(self) -> None:
         """
         not in use now, but may be useful later
         """
-        buttonsToChange  = ["scaleButton", "scaleTextX", "scaleX", "scaleXProcent", "scaleTextY", "scaleY", "scaleYProcent", "scaleProportional"]
+        buttonsToChange = [
+            "scaleButton",
+            "scaleTextX",
+            "scaleX",
+            "scaleXProcent",
+            "scaleTextY",
+            "scaleY",
+            "scaleYProcent",
+            "scaleProportional",
+        ]
         for i, buttonName in enumerate(buttonsToChange):
             button = getattr(self.view, buttonName)
             left, top, width, height = button.getPosSize()
@@ -120,7 +128,6 @@ class ScaleAbsolutely:
                 left *= 0.9
             width *= 0.9
             button.setPosSize((left, top, width, height))
-
 
     def inspectorWindowWillShowDescriptions(self, notification) -> None:
         """
@@ -131,19 +138,21 @@ class ScaleAbsolutely:
                 view = subMenu["view"]
                 break
         if view:
+            state = getExtensionDefault(self.extensionKey, fallback=False)
             left, top, width, height = view.scaleProportional.getPosSize()
-            view.scaleProportional.setPosSize((left, math.ceil(top-height/2)+2, width, height))
-            view.absolutelyBool = self.buttonState
+            view.scaleProportional.setPosSize(
+                (left, math.ceil(top - height / 2) + 2, width, height)
+            )
             scaleAbsolutely = CheckBox(
-                (left, math.floor(top+height/2), width, height),
+                (left, math.floor(top + height / 2), width, height),
                 "pt",
-                sizeStyle = "small",
-                callback = (self.scaleAbsolutelyCallback),
-                value = self.buttonState
+                sizeStyle="small",
+                callback=(self.scaleAbsolutelyCallback),
+                value=state,
             )
             view.scaleAbsolutely = scaleAbsolutely
             self.view = view
-            self.setSign(self.buttonState)
+            self.setSign(state)
 
 
-ScaleAbsolutely()
+ScaleAbsolutely(extensionKey)
