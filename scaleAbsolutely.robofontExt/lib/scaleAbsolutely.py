@@ -18,7 +18,11 @@ def possibleZeroDivison(numr, dnom, result=1.0) -> float:
     it is expected that zero divison can appear. Like when scaling
     a path that has width but no height
     """
+    if not numr:
+        # if numr == zero or None
+        return result
     try:
+        # probably unnecessary, with the new if statement
         return numr / dnom
     except ZeroDivisionError:
         return result
@@ -57,9 +61,8 @@ def absoluteScaleCallback(self, sender) -> None:
 
 def absoluteDecorator(func) -> Callable:
     """
-    decorater to modify the default scaleCallback
+    decorator to modify the default scaleCallback
     """
-
     @wraps(func)
     def wrapper(self, *args, **kwargs) -> None:
         def newFunc(self, *args, **kwargs) -> None:
