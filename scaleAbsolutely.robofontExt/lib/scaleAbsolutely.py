@@ -2,18 +2,24 @@ import math
 
 from pathlib import Path
 from functools import wraps
-from typing import Callable
+from typing import Callable, Union, List, Tuple
 
-from mojo.events import addObserver
+from mojo.events import addObserver, clearObservers
 from mojo.extensions import getExtensionDefault, setExtensionDefault
 from lib.UI.roundRectButton import RoundRectButton
 from lib.UI.inspector.transformPane import TransformPane
 from vanilla import Button, CheckBox
+from lib.UI.integerEditText import IntegerEditText, NumberEditText
+
 
 extensionKey = "jan-sindler.scale.absolutely"
+key_scaleX_percentage = "jan-sindler.scale.absolutely.x.perc"
+key_scaleX_points = "jan-sindler.scale.absolutely.x.points"
+key_scaleY_percentage = "jan-sindler.scale.absolutely.y.perc"
+key_scaleY_points = "jan-sindler.scale.absolutely.y.points"
 
 
-def possibleZeroDivison(numr, dnom, result=1.0) -> float:
+def possibleZeroDivison(numr, dnom, result=1) -> Union[float, int]:
     """
     it is expected that zero divison can appear. Like when scaling
     a path that has width but no height
@@ -28,12 +34,7 @@ def possibleZeroDivison(numr, dnom, result=1.0) -> float:
         return result
 
 
-def absoluteScaleCallback(self, sender) -> None:
-    """
-    Absolute point scale callback. It uses the original one,
-    But it recalculates the scale based on wanted point width, height.
-    """
-    glyph = CurrentGlyph()
+def getBounds(glyph) -> Tuple[int, float]:
     pointObjects = glyph.selection
     if not pointObjects:
         container: list = []
@@ -49,9 +50,23 @@ def absoluteScaleCallback(self, sender) -> None:
     _, yMin = min(points, key=lambda x: x[1])
     _, yMax = max(points, key=lambda x: x[1])
 
-    curWidth, curHeight = xMax - xMin, yMax - yMin
-    _scaleX = possibleZeroDivison(self.scaleX.get(), curWidth)
-    _scaleY = possibleZeroDivison(self.scaleY.get(), curHeight)
+    return xMax - xMin, yMax - yMin
+
+
+def absoluteScaleCallback(self, sender) -> None:
+    """
+    Absolute point scale callback. It uses the original one,
+    But it recalculates the scale based on wanted point width, height.
+    """
+
+    curWidth, curHeight = getBounds(CurrentGlyph())
+    valueX = self.scaleX.get()
+    valueY = self.scaleY.get()
+    setExtensionDefault(key_scaleX_points, valueX)
+    setExtensionDefault(key_scaleY_points, valueY)
+
+    _scaleX = possibleZeroDivison(valueX, curWidth)
+    _scaleY = possibleZeroDivison(valueY, curHeight)
 
     transformDict = dict(scaleX=_scaleX * 100, scaleY=_scaleY * 100)
     self._callculateTransformation(transformDict, self.glyph)
@@ -59,15 +74,12 @@ def absoluteScaleCallback(self, sender) -> None:
     self._setUndoManagerForGlyphs([self.glyph], isinstance(sender, Button))
 
 
-def absoluteDecorator(func) -> Callable:
-    """
-    decorator to modify the default scaleCallback
-    """
+def absoluteDecorator(func: Callable, otherFunc: Callable) -> Callable:
     @wraps(func)
     def wrapper(self, *args, **kwargs) -> None:
         def newFunc(self, *args, **kwargs) -> None:
             if getExtensionDefault(extensionKey):
-                absoluteScaleCallback(self, *args, **kwargs)
+                otherFunc(self, *args, **kwargs)
             else:
                 func(self, *args, **kwargs)
             return None
@@ -77,11 +89,15 @@ def absoluteDecorator(func) -> Callable:
     return wrapper
 
 
-setattr(TransformPane, "scaleCallback", absoluteDecorator(TransformPane.scaleCallback))
+setattr(
+    TransformPane,
+    "scaleCallback",
+    absoluteDecorator(TransformPane.scaleCallback, absoluteScaleCallback),
+)
 
 
 class ScaleAbsolutely:
-    def __init__(self, extensionKey) -> None:
+    def __init__(self, extensionKey: str) -> None:
         addObserver(
             self,
             "inspectorWindowWillShowDescriptions",
@@ -98,39 +114,40 @@ class ScaleAbsolutely:
         self.view.scaleYProcent.set(sign)
         self.view.scaleXProcent.set(sign)
 
-    def scaleAbsolutelyCallback(self, sender) -> None:
+    def absoluteCheckBoxCallback(self, sender) -> None:
         """
         switching state of button globally and notation of input fields
         """
+        curValueX, curValueY = self.view.scaleX.get(), self.view.scaleY.get()
         if sender.get():
+            # points
             state = True
+            setExtensionDefault(key_scaleX_percentage, curValueX)
+            setExtensionDefault(key_scaleY_percentage, curValueY)
+            valueX = getExtensionDefault(key_scaleX_points, fallback=100)
+            valueY = getExtensionDefault(key_scaleY_points, fallback=100)
+
         else:
+            setExtensionDefault(key_scaleX_points, curValueX)
+            setExtensionDefault(key_scaleY_points, curValueY)
+            valueX = getExtensionDefault(key_scaleX_percentage, fallback=100)
+            valueY = getExtensionDefault(key_scaleY_percentage, fallback=100)
             state = False
 
+        self.view.scaleX.originalSet(valueX if valueX else "")
+        self.view.scaleY.originalSet(valueY if valueY else "")
         setExtensionDefault(self.extensionKey, state)
         self.setSign(state)
 
-    def scaleExistingButtons(self) -> None:
+    def setInput(self, value: str, *args, **kwargs) -> None:
         """
-        not in use now, but may be useful later
+        sets input's text in points. F.e. when scaling
         """
-        buttonsToChange = [
-            "scaleButton",
-            "scaleTextX",
-            "scaleX",
-            "scaleXProcent",
-            "scaleTextY",
-            "scaleY",
-            "scaleYProcent",
-            "scaleProportional",
-        ]
-        for i, buttonName in enumerate(buttonsToChange):
-            button = getattr(self.view, buttonName)
-            left, top, width, height = button.getPosSize()
-            if i != 0:
-                left *= 0.9
-            width *= 0.9
-            button.setPosSize((left, top, width, height))
+        if len(value):
+            curWidth, curHeight = list(map(round, getBounds(CurrentGlyph())))
+            self.view.scaleX.originalSet(curWidth)
+            self.view.scaleY.originalSet(curHeight)
+        return None
 
     def inspectorWindowWillShowDescriptions(self, notification) -> None:
         """
@@ -146,15 +163,34 @@ class ScaleAbsolutely:
             view.scaleProportional.setPosSize(
                 (left, math.ceil(top - height / 2) + 2, width, height)
             )
-            scaleAbsolutely = CheckBox(
+            scaleAbsolutelyCheckBox = CheckBox(
                 (left, math.floor(top + height / 2), width, height),
                 "pt",
                 sizeStyle="small",
-                callback=(self.scaleAbsolutelyCallback),
+                callback=(self.absoluteCheckBoxCallback),
                 value=state,
             )
-            view.scaleAbsolutely = scaleAbsolutely
+            view.scaleAbsolutelyCheckBox = scaleAbsolutelyCheckBox
             self.view = view
+
+            setattr(self.view.scaleX, "originalSet", self.view.scaleX.set)
+            setattr(self.view.scaleY, "originalSet", self.view.scaleY.set)
+            setattr(
+                self.view.scaleX,
+                "set",
+                absoluteDecorator(self.view.scaleX.set, self.setInput),
+            )
+            setattr(
+                self.view.scaleY,
+                "set",
+                absoluteDecorator(self.view.scaleY.set, self.setInput),
+            )
+            if getExtensionDefault(extensionKey, fallback=None):
+                valueX = getExtensionDefault(key_scaleX_points, fallback=None)
+                valueY = getExtensionDefault(key_scaleY_points, fallback=None)
+                print(valueX, valueY)
+                self.view.scaleX.originalSet(str(round(valueX)) if bool(valueX) else "")
+                self.view.scaleY.originalSet(str(round(valueY)) if bool(valueY) else "")
             self.setSign(state)
 
 
