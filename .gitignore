@@ -1,3 +1,4 @@
 .*
 !.gitignore
 preferences.plist
+__pycache__

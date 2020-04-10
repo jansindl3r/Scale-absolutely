@@ -10,7 +10,12 @@ from lib.UI.roundRectButton import RoundRectButton
 from lib.UI.inspector.transformPane import TransformPane
 from vanilla import Button, CheckBox
 from lib.UI.integerEditText import IntegerEditText, NumberEditText
+from lib.fontObjects.fontPartsWrappers import CurrentGlyph, CurrentFont
 
+from tools import EvalUserInput
+
+
+clearObservers()
 
 extensionKey = "jan-sindler.scale.absolutely"
 key_scaleX_percentage = "jan-sindler.scale.absolutely.x.perc"
@@ -53,20 +58,34 @@ def getBounds(glyph) -> Tuple[int, float]:
     return xMax - xMin, yMax - yMin
 
 
-def absoluteScaleCallback(self, sender) -> None:
+def absoluteScaleCallback(self, sender, x=True, y=True) -> None:
     """
     Absolute point scale callback. It uses the original one,
     But it recalculates the scale based on wanted point width, height.
     """
 
     curWidth, curHeight = getBounds(CurrentGlyph())
-    valueX = self.scaleX.get()
-    valueY = self.scaleY.get()
-    setExtensionDefault(key_scaleX_points, valueX)
-    setExtensionDefault(key_scaleY_points, valueY)
+    if x:
+        valueX = self.scaleX._get()
+        valueX = EvalUserInput(valueX, curWidth, CurrentFont().info)
+        valueX = valueX if valueX else self.scaleX.get()
+        _scaleX = possibleZeroDivison(valueX, curWidth)
+        if sender:
+            setExtensionDefault(key_scaleX_points, valueX)
 
-    _scaleX = possibleZeroDivison(valueX, curWidth)
-    _scaleY = possibleZeroDivison(valueY, curHeight)
+    else:
+        _scaleX = 1
+
+    if y:
+        valueY = self.scaleY._get()
+        valueY = EvalUserInput(valueY, curHeight, CurrentFont().info)
+        valueY = valueY if valueY else self.scaleY.get()
+        _scaleY = possibleZeroDivison(valueY, curHeight)
+        if sender:
+            setExtensionDefault(key_scaleY_points, valueY)
+
+    else:
+        _scaleY = 1
 
     transformDict = dict(scaleX=_scaleX * 100, scaleY=_scaleY * 100)
     self._callculateTransformation(transformDict, self.glyph)
@@ -105,6 +124,7 @@ class ScaleAbsolutely:
         )
         self.extensionKey = extensionKey
         self.stateDict = {True: "pt", False: "%"}
+        self.view: TransformPane = None
 
     def setSign(self, state: bool) -> None:
         """
@@ -188,10 +208,7 @@ class ScaleAbsolutely:
             if getExtensionDefault(extensionKey, fallback=None):
                 valueX = getExtensionDefault(key_scaleX_points, fallback=None)
                 valueY = getExtensionDefault(key_scaleY_points, fallback=None)
-                print(valueX, valueY)
                 self.view.scaleX.originalSet(str(round(valueX)) if bool(valueX) else "")
                 self.view.scaleY.originalSet(str(round(valueY)) if bool(valueY) else "")
             self.setSign(state)
 
-
-ScaleAbsolutely(extensionKey)

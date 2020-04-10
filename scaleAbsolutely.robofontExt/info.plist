@@ -3,7 +3,41 @@
 <plist version="1.0">
 <dict>
 	<key>addToMenu</key>
-	<array/>
+	<array>
+		<dict>
+			<key>path</key>
+			<string>runWidth.py</string>
+			<key>preferredName</key>
+			<string>current width scale</string>
+			<key>shortKey</key>
+			<array>
+				<integer>262144</integer>
+			    <string>d</string>
+			</array>
+		</dict>
+        <dict>
+			<key>path</key>
+			<string>runHeight.py</string>
+			<key>preferredName</key>
+			<string>current height scale</string>
+			<key>shortKey</key>
+			<array>
+				<integer>262144</integer>
+			    <string>w</string>
+			</array>
+		</dict>
+        <dict>
+			<key>path</key>
+			<string>runBoth.py</string>
+			<key>preferredName</key>
+			<string>current width and height scale</string>
+			<key>shortKey</key>
+			<array>
+				<integer>262144</integer>
+			    <string>s</string>
+			</array>
+		</dict>
+	</array>
 	<key>developer</key>
 	<string>Jan Sindler</string>
 	<key>developerURL</key>
@@ -13,7 +47,7 @@
 	<key>launchAtStartUp</key>
 	<true/>
 	<key>mainScript</key>
-	<string>scaleAbsolutely.py</string>
+	<string>__init__.py</string>
 	<key>name</key>
 	<string>Scale, absolutely!</string>
 	<key>requiresVersionMajor</key>
@@ -23,6 +57,6 @@
 	<key>timeStamp</key>
 	<real>1586166856.758841</real>
 	<key>version</key>
-	<string>0.3</string>
+	<string>0.4</string>
 </dict>
 </plist>
