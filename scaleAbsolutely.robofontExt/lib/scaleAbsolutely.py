@@ -4,7 +4,7 @@ from pathlib import Path
 from functools import wraps
 from typing import Callable, Union, List, Tuple
 
-from mojo.events import addObserver, clearObservers
+from mojo.events import addObserver
 from mojo.extensions import getExtensionDefault, setExtensionDefault
 from lib.UI.roundRectButton import RoundRectButton
 from lib.UI.inspector.transformPane import TransformPane
@@ -15,7 +15,6 @@ from lib.fontObjects.fontPartsWrappers import CurrentGlyph, CurrentFont
 from tools import EvalUserInput
 
 
-clearObservers()
 
 extensionKey = "jan-sindler.scale.absolutely"
 key_scaleX_percentage = "jan-sindler.scale.absolutely.x.perc"
