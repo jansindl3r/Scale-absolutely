@@ -4,41 +4,6 @@
 <dict>
 	<key>addToMenu</key>
     <array/>
-	<!-- <array>
-		<dict>
-			<key>path</key>
-			<string>runWidth.py</string>
-			<key>preferredName</key>
-			<string>current width scale</string>
-			<key>shortKey</key>
-			<array>
-				<integer>262144</integer>
-			    <string>d</string>
-			</array>
-		</dict>
-        <dict>
-			<key>path</key>
-			<string>runHeight.py</string>
-			<key>preferredName</key>
-			<string>current height scale</string>
-			<key>shortKey</key>
-			<array>
-				<integer>262144</integer>
-			    <string>w</string>
-			</array>
-		</dict> -->
-        <dict>
-			<key>path</key>
-			<string>runBoth.py</string>
-			<key>preferredName</key>
-			<string>current width and height scale</string>
-			<key>shortKey</key>
-			<array>
-				<integer>262144</integer>
-			    <string>s</string>
-			</array>
-		</dict>
-	</array>
 	<key>developer</key>
 	<string>Jan Sindler</string>
 	<key>developerURL</key>
