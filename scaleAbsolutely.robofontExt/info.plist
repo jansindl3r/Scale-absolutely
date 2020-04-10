@@ -3,7 +3,8 @@
 <plist version="1.0">
 <dict>
 	<key>addToMenu</key>
-	<array>
+    <array/>
+	<!-- <array>
 		<dict>
 			<key>path</key>
 			<string>runWidth.py</string>
@@ -25,7 +26,7 @@
 				<integer>262144</integer>
 			    <string>w</string>
 			</array>
-		</dict>
+		</dict> -->
         <dict>
 			<key>path</key>
 			<string>runBoth.py</string>
