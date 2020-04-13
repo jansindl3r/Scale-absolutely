@@ -48,7 +48,7 @@ class EvalUserInput(object):
         zoneDict = {}
         for vals in zip(container[::2], container[1:][::2]):
             k, v = sorted(vals, key=lambda x: abs(x))
-            zoneDict[k] = abs(v)
+            zoneDict[k] = v
 
         variables = {
             "x": self.fontInfo.xHeight,
@@ -58,7 +58,7 @@ class EvalUserInput(object):
         }
 
         for k, v in [i for i in variables.items()]:
-            value = abs(zoneDict.get(v, v))
+            value = zoneDict.get(v, v)
             variables[k.upper()] = value
 
         variables.setdefault("B", zoneDict.get(0, 0))
