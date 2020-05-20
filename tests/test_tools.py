@@ -16,23 +16,23 @@ from pathlib import Path
 class TestTools(unittest.TestCase):
 
     def test_inputInteger(self):
-        self.assertEqual(tools.EvalUserInput('10', 100, CurrentFont().info), None)
+        self.assertEqual(tools.EvalUserInput('10', 100, CurrentFont().info).result, 10)
 
     def test_inputFloat(self):
-        self.assertEqual(tools.EvalUserInput('10.1', 100, CurrentFont().info), None)
+        self.assertEqual(tools.EvalUserInput('10.1', 100, CurrentFont().info).result, 10.1)
 
     def test_adding(self):
-        self.assertEqual(tools.EvalUserInput('+10', 100, CurrentFont().info), 110)
+        self.assertEqual(tools.EvalUserInput('+10', 100, CurrentFont().info).result, 110)
 
     def test_verticalMetricsVars(self):
-        self.assertEqual(tools.EvalUserInput('a', 100, CurrentFont().info), 750)
+        self.assertEqual(tools.EvalUserInput('a', 100, CurrentFont().info).result, 750)
 
     def test_verticalMetricsVarsWithZones(self):
-        self.assertEqual(tools.EvalUserInput('A+B', 100, CurrentFont().info), 790)
+        self.assertEqual(tools.EvalUserInput('A+B', 100, CurrentFont().info).result, 790)
 
     def test_formula(self):
         formula = '(10*A-700-B)-D'
-        self.assertEqual(tools.EvalUserInput(formula, 100, CurrentFont().info), 6710) 
+        self.assertEqual(tools.EvalUserInput(formula, 100, CurrentFont().info).result, 6710) 
 
     def test_dictionary(self):
         info = CurrentFont().info
@@ -57,7 +57,7 @@ class TestTools(unittest.TestCase):
 if __name__ == '__main__':
     curFont = CurrentFont()
     path = Path('test_font.ufo')
-    if Path(curFont.path).absolute() != path.absolute():
+    if curFont.path and Path(curFont.path).absolute() != path.absolute():
         OpenFont(path)
     loader = unittest.TestLoader()
     tests = []

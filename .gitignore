@@ -2,3 +2,4 @@
 !.gitignore
 preferences.plist
 __pycache__
+*.ufo
