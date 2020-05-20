@@ -17,30 +17,23 @@ class EvalUserInput(object):
         "postscriptFamilyOtherBlues",
     ]
 
-    def __new__(cls, *args, **kwargs):
-        """
-        makes this class behave like a function
-        """
-        index = cls.__init__.__code__.co_varnames.index("userInput") - 1
-        userInput = args[index]
-        pattern = re.compile("^([0-9\.]+)+$")
-        match = re.match(pattern, userInput)
-        if match:
-            return None
-        else:
-            instance = super(EvalUserInput, cls).__new__(cls)
-            instance.__init__(*args, **kwargs)
-            return instance.getEvaluatedInput()
-
     def __init__(
         self, userInput: str, curSize: Union[float, int], fontInfo: CurrentFont
     ) -> None:
-        self.userInput = userInput
-        self.curSize = curSize
-        self.fontInfo = fontInfo
-        self.variables = self.getVariables()
+        pattern = re.compile(r"^([0-9\.]+)+$")
+        match = re.match(pattern, userInput)
+        if len(userInput) == 0:
+            self.result = curSize
+        elif match:
+            self.result = float(userInput)
+        else:
+            self.userInput = str(userInput)
+            self.curSize = curSize
+            self.fontInfo = fontInfo
+            self.variables = self.getVariables()
+            self.result = round(self.evalUserInput())
 
-    def getVariables(self, zones=zones) -> dict:
+    def getVariables(self, zones: list=zones) -> dict:
         container: list = []
         for zone in zones:
             container += getattr(self.fontInfo, zone)
@@ -65,7 +58,7 @@ class EvalUserInput(object):
 
         return variables
 
-    def evalUserInput(self) -> Union[float, int, None]:
+    def evalUserInput(self) -> Union[float, int]:
         operators = ("*", "/", "+", "-", "%")
         formula = self.userInput
         for operator in operators:
@@ -74,16 +67,6 @@ class EvalUserInput(object):
         for key in self.variables.keys():
             if key in formula:
                 formula = formula.replace(key, str(abs(self.variables[key])))
-        try:
-            out = eval(formula)
-            return out
-        except:
-            return None
-
-    def getEvaluatedInput(self) -> Union[float, int, None]:
-        out = self.evalUserInput()
-        if out:
-            return out
-        else:
-            return None
+        out = eval(formula)
+        return out
 
